@@ -61,15 +61,7 @@ setup_directories() {
     echo -e "${GREEN}Diretórios criados com sucesso!${NC}"
 }
 
-# Limpar containers anteriores
-cleanup() {
-    echo -e "${YELLOW}Limpando containers anteriores...${NC}"
-    
-    $COMPOSE_CMD down -v 2>/dev/null || true
-    docker system prune -f --volumes 2>/dev/null || true
-    
-    echo -e "${GREEN}Limpeza concluída!${NC}"
-}
+
 
 # Iniciar serviços
 start_services() {
@@ -208,7 +200,6 @@ main() {
     
     check_dependencies
     setup_directories
-    cleanup
     start_services
     show_monitoring_urls
     
