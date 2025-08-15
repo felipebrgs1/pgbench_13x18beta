@@ -1,0 +1,31 @@
+=== System Stats for PostgreSQL 13 ===
+Timestamp: Fri Aug 15 12:58:29 UTC 2025
+
+=== System Resources ===
+Memory Info:
+MemTotal:       24292700 kB
+MemFree:         4222096 kB
+MemAvailable:   16646900 kB
+Buffers:            2884 kB
+Cached:         14054116 kB
+
+CPU Info:
+model name	: 12th Gen Intel(R) Core(TM) i7-12700H
+CPU Cores: 20
+
+Load Average:
+0.17 0.33 0.64 1/1869 23
+
+=== PostgreSQL Stats ===
+ db_size_bytes | db_size_pretty 
+---------------+----------------
+     798044719 | 761 MB
+(1 row)
+
+
+=== Active Connections ===
+ active_connections 
+--------------------
+                  1
+(1 row)
+

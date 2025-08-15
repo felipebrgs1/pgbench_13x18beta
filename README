@@ -1,0 +1,309 @@
+# PostgreSQL 13 vs 18 Beta3 - Benchmark Completo
+
+Este repositório contém um setup completo para comparar a performance entre PostgreSQL 13 e PostgreSQL 18 Beta3 utilizando Docker Compose, pgbench, e monitoramento com Prometheus.
+
+## 🎯 Objetivo
+
+Realizar um benchmark abrangente comparando:
+- **Throughput** (TPS - Transações por segundo)
+- **Latência** média das consultas
+- **Uso de CPU e Memória**
+- **Eficiência de I/O**
+- **Performance de diferentes tipos de workload**
+
+## 📋 Pré-requisitos
+
+- **Docker** >= 20.10
+- **Docker Compose** >= 1.29
+- **Pelo menos 4GB RAM disponível**
+- **Pelo menos 2 CPU cores**
+- **10GB espaço em disco livre**
+
+## 🏗️ Arquitetura do Benchmark
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   PostgreSQL    │    │   PostgreSQL    │    │   pgbench       │
+│       13        │    │    18 Beta3     │    │   Runner        │
+│   (Port 5432)   │    │   (Port 5433)   │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+    │   Prometheus    │    │   PG Exporter   │    │   PG Exporter   │
+    │   (Port 9090)   │    │   PG13 (9187)   │    │   PG18 (9188)   │
+    └─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+## 🚀 Como Executar
+
+### 1. Preparação dos Arquivos
+
+Crie a seguinte estrutura de diretórios e coloque os arquivos nos locais corretos:
+
+```bash
+postgres-benchmark/
+├── docker compose.yml
+├── postgresql.conf
+├── prometheus.yml
+├── run_postgres_benchmark.sh
+├── benchmark-scripts/
+│   ├── run_benchmarks.sh
+│   └── generate_report.sh
+├── init-scripts/
+│   └── 01_init.sql
+├── benchmark-results/
+└── README.md
+```
+
+### 2. Tornar Scripts Executáveis
+
+```bash
+chmod +x run_postgres_benchmark.sh
+chmod +x benchmark-scripts/*.sh
+```
+
+### 3. Execução Automática (Recomendado)
+
+```bash
+./run_postgres_benchmark.sh
+```
+
+### 4. Execução Manual
+
+Se preferir controle manual:
+
+```bash
+# Iniciar serviços
+docker compose up -d
+
+# Aguardar containers ficarem prontos (2-3 minutos)
+docker compose logs -f postgres13 postgres18
+
+# Executar benchmarks
+docker compose exec pgbench-runner /benchmark-scripts/run_benchmarks.sh
+
+# Parar serviços
+docker compose down
+```
+
+## 📊 Tipos de Teste
+
+### 1. Standard Test (TPC-B Like)
+- **Descrição**: Workload OLTP típico com mix de operações
+- **Operações**: SELECT, INSERT, UPDATE, transações complexas
+- **Uso**: Simula aplicações reais com carga mista
+
+### 2. Read-Only Test
+- **Descrição**: Apenas operações SELECT
+- **Operações**: Consultas de leitura otimizadas
+- **Uso**: Testa performance de consultas e otimizações do planner
+
+### 3. Prepared Statements Test
+- **Descrição**: TPC-B usando prepared statements
+- **Operações**: Mesmas do standard, mas com statements preparados
+- **Uso**: Testa eficiência do cache de statements e parsing
+
+## 📈 Monitoramento em Tempo Real
+
+Durante a execução, você pode monitorar:
+
+- **Prometheus**: http://localhost:9090
+- **Métricas PG13**: http://localhost:9187/metrics
+- **Métricas PG18**: http://localhost:9188/metrics
+
+### Queries Úteis no Prometheus
+
+```promql
+# Taxa de transações por segundo
+rate(pg_stat_database_xact_commit_total[5m])
+
+# Conexões ativas
+pg_stat_activity_count{state="active"}
+
+# Cache hit ratio
+pg_stat_database_blks_hit / (pg_stat_database_blks_hit + pg_stat_database_blks_read)
+
+# Tempo médio de consulta
+rate(pg_stat_statements_mean_time_ms[5m])
+```
+
+## 📋 Configurações de Performance
+
+### PostgreSQL otimizado para benchmark:
+- **shared_buffers**: 512MB
+- **effective_cache_size**: 1GB  
+- **work_mem**: 16MB
+- **maintenance_work_mem**: 256MB
+- **max_connections**: 200
+- **checkpoint_completion_target**: 0.9
+
+### Recursos Docker:
+- **CPU**: 2 cores por container
+- **Memória**: 2GB por container
+- **Limits**: Controlados via Docker Compose
+
+## 📊 Interpretando os Resultados
+
+### Arquivo de Relatório Principal
+```
+benchmark-results/benchmark_summary_YYYYMMDD_HHMMSS.md
+```
+
+### Métricas Principais
+
+1. **TPS (Transactions Per Second)**
+   - Maior = melhor performance
+   - Compare entre os tipos de teste
+
+2. **Latência Média**
+   - Menor = melhor responsividade
+   - Importante para aplicações interativas
+
+3. **Uso de Recursos**
+   - CPU: % de utilização
+   - Memória: padrões de consumo
+   - I/O: operações de disco
+
+### Exemplo de Resultado Esperado
+
+```markdown
+| Test Type | PostgreSQL 13 | PostgreSQL 18 | Improvement |
+|-----------|---------------|---------------|-------------|
+| standard  | 1250.5        | 1387.2        | +10.9%      |
+| readonly  | 8934.1        | 9876.5        | +10.5%      |
+| prepared  | 1456.8        | 1623.4        | +11.4%      |
+```
+
+## 🔧 Personalização
+
+### Ajustar Parâmetros do Benchmark
+
+Edite `benchmark-scripts/run_benchmarks.sh`:
+
+```bash
+SCALE_FACTOR=50     # Tamanho da base (50 = ~750MB)
+THREADS=4           # Threads do pgbench
+CLIENTS=20          # Conexões simultâneas
+DURATION=300        # Duração em segundos
+```
+
+### Modificar Configuração PostgreSQL
+
+Edite `postgresql.conf` para ajustar:
+- Memória (shared_buffers, work_mem)
+- Checkpoints
+- WAL settings
+- Logging levels
+
+### Adicionar Testes Customizados
+
+Crie scripts SQL em `init-scripts/` para:
+- Tabelas de teste específicas
+- Índices customizados
+- Funções de benchmark
+
+## 🐛 Troubleshooting
+
+### Container não inicia
+```bash
+# Verificar logs
+docker compose logs postgres13
+docker compose logs postgres18
+
+# Verificar recursos
+docker system df
+```
+
+### Benchmark falha
+```bash
+# Verificar conectividade
+docker compose exec pgbench-runner pg_isready -h postgres13 -p 5432
+docker compose exec pgbench-runner pg_isready -h postgres18 -p 5432
+
+# Verificar permissões
+ls -la benchmark-scripts/
+```
+
+### Performance muito baixa
+- Aumentar recursos Docker
+- Verificar se há outros containers consumindo recursos
+- Ajustar `SCALE_FACTOR` para menor valor
+
+### Erro de memória
+```bash
+# Reduzir configurações
+# Em postgresql.conf:
+shared_buffers = 256MB
+work_mem = 8MB
+```
+
+## 📁 Estrutura de Arquivos Gerados
+
+```
+benchmark-results/
+├── benchmark_summary_20241215_143022.md      # Relatório principal
+├── pgbench_13_standard_20241215_143022.log   # Logs detalhados PG13
+├── pgbench_18_standard_20241215_143022.log   # Logs detalhados PG18
+├── system_stats_13_20241215_143022.log       # Stats sistema PG13
+├── system_stats_18_20241215_143022.log       # Stats sistema PG18
+├── table_stats_pg13_20241215_143022.log      # Estatísticas tabelas PG13
+├── table_stats_pg18_20241215_143022.log      # Estatísticas tabelas PG18
+└── query_stats_pg13_20241215_143022.log      # Top queries PG13
+```
+
+## 🧹 Limpeza
+
+### Parar serviços mantendo dados
+```bash
+docker compose stop
+```
+
+### Parar e remover containers mantendo volumes
+```bash
+docker compose down
+```
+
+### Limpeza completa (remove tudo)
+```bash
+docker compose down -v
+docker system prune -f --volumes
+```
+
+## ⚡ Quick Start
+
+Para executar rapidamente:
+
+```bash
+# Clone ou baixe os arquivos
+git clone <repo> postgres-benchmark
+cd postgres-benchmark
+
+# Execute
+./run_postgres_benchmark.sh
+
+# Aguarde (~20-30 minutos)
+# Resultados em: benchmark-results/
+```
+
+## 📝 Notas Importantes
+
+1. **Primeira execução**: Pode demorar mais devido ao download das imagens Docker
+2. **Recursos**: Certifique-se de ter recursos suficientes disponíveis
+3. **Dados persistentes**: Os volumes Docker mantêm dados entre execuções
+4. **Customização**: Todos os parâmetros podem ser ajustados conforme necessário
+5. **Produção**: Este setup é para teste/desenvolvimento, não produção
+
+## 🤝 Contribuição
+
+Para melhorias ou problemas:
+1. Crie uma issue descrevendo o problema
+2. Proponha melhorias nos scripts
+3. Compartilhe resultados de diferentes ambientes
+
+---
+
+**Autor**: Benchmark PostgreSQL Setup  
+**Versão**: 1.0  
+**Data**: Dezembro 2024

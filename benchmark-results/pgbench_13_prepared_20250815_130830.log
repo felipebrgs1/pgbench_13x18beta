@@ -1,0 +1,25 @@
+pgbench (18beta3, server 13.22)
+starting vacuum...end.
+progress: 30.0 s, 4788.7 tps, lat 4.166 ms stddev 10.188, 0 failed
+progress: 60.0 s, 4685.0 tps, lat 4.246 ms stddev 10.453, 0 failed
+progress: 90.0 s, 4581.2 tps, lat 4.371 ms stddev 10.637, 0 failed
+progress: 120.0 s, 4606.4 tps, lat 4.333 ms stddev 10.467, 0 failed
+progress: 150.0 s, 4575.3 tps, lat 4.363 ms stddev 10.846, 0 failed
+progress: 180.0 s, 2596.2 tps, lat 7.693 ms stddev 8.786, 0 failed
+progress: 210.0 s, 1916.8 tps, lat 10.422 ms stddev 8.768, 0 failed
+progress: 240.0 s, 1921.1 tps, lat 10.403 ms stddev 8.637, 0 failed
+progress: 270.0 s, 1925.0 tps, lat 10.378 ms stddev 8.141, 0 failed
+progress: 300.0 s, 1933.1 tps, lat 10.336 ms stddev 10.628, 0 failed
+transaction type: <builtin: TPC-B (sort of)>
+scaling factor: 50
+query mode: prepared
+number of clients: 20
+number of threads: 4
+maximum number of tries: 1
+duration: 300 s
+number of transactions actually processed: 1005889
+number of failed transactions: 0 (0.000%)
+latency average = 5.956 ms
+latency stddev = 10.405 ms
+initial connection time = 15.143 ms
+tps = 3352.985575 (without initial connection time)

@@ -1,0 +1,31 @@
+=== System Stats for PostgreSQL 18 ===
+Timestamp: Fri Aug 15 13:13:35 UTC 2025
+
+=== System Resources ===
+Memory Info:
+MemTotal:       24292700 kB
+MemFree:         1800848 kB
+MemAvailable:   16326704 kB
+Buffers:            2884 kB
+Cached:         16583268 kB
+
+CPU Info:
+model name	: 12th Gen Intel(R) Core(TM) i7-12700H
+CPU Cores: 20
+
+Load Average:
+3.33 4.63 3.18 4/1883 59
+
+=== PostgreSQL Stats ===
+ db_size_bytes | db_size_pretty 
+---------------+----------------
+     797832895 | 761 MB
+(1 row)
+
+
+=== Active Connections ===
+ active_connections 
+--------------------
+                  1
+(1 row)
+

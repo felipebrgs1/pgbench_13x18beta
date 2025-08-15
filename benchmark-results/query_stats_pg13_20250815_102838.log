@@ -1,0 +1,3 @@
+ERROR:  column "total_time" does not exist
+LINE 5:                 total_time,
+                        ^

@@ -1,0 +1,34 @@
+=== Container Statistics ===
+Timestamp: Fri Aug 15 10:28:36 AM -03 2025
+
+=== Docker Stats ===
+
+=== Container Resource Usage ===
+--- postgres13_benchmark ---
+PID   USER     TIME  COMMAND
+    1 postgres  0:00 postgres -c config_file=/etc/postgresql/postgresql.conf
+   59 postgres  0:00 postgres: logger 
+   61 postgres  0:02 postgres: checkpointer 
+   62 postgres  0:04 postgres: background writer 
+   63 postgres  0:03 postgres: walwriter 
+   64 postgres  0:00 postgres: autovacuum launcher 
+   65 postgres  0:01 postgres: stats collector 
+   66 postgres  0:00 postgres: logical replication launcher 
+   67 postgres  0:01 postgres: benchmark_user benchmark_db 172.18.0.6(58436) idle
+ 1049 root      0:00 ps aux
+
+--- postgres18_benchmark ---
+PID   USER     TIME  COMMAND
+    1 postgres  0:00 postgres -c config_file=/etc/postgresql/postgresql.conf
+   62 postgres  0:00 postgres: logger 
+   63 postgres  0:00 postgres: io worker 0
+   64 postgres  0:00 postgres: io worker 2
+   65 postgres  0:00 postgres: io worker 1
+   66 postgres  0:01 postgres: checkpointer 
+   67 postgres  0:05 postgres: background writer 
+   69 postgres  0:02 postgres: walwriter 
+   70 postgres  0:00 postgres: autovacuum launcher 
+   71 postgres  0:00 postgres: logical replication launcher 
+   72 postgres  0:01 postgres: benchmark_user benchmark_db 172.18.0.5(33354) idle
+ 1086 root      0:00 ps aux
+

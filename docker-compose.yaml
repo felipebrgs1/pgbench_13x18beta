@@ -1,0 +1,131 @@
+services:
+  postgres13:
+    image: postgres:13-alpine
+    container_name: postgres13_benchmark
+    environment:
+      POSTGRES_DB: benchmark_db
+      POSTGRES_USER: benchmark_user
+      POSTGRES_PASSWORD: benchmark_pass
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres13_data:/var/lib/postgresql/data
+      - ./postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+    networks:
+      - benchmark_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U benchmark_user -d benchmark_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  postgres18:
+    image: postgres:18beta3-alpine
+    container_name: postgres18_benchmark
+    environment:
+      POSTGRES_DB: benchmark_db
+      POSTGRES_USER: benchmark_user
+      POSTGRES_PASSWORD: benchmark_pass
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=C"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres18_data:/var/lib/postgresql/data
+      - ./postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+    networks:
+      - benchmark_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U benchmark_user -d benchmark_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  pgbench-runner:
+    image: postgres:18beta3-alpine
+    container_name: pgbench_runner
+    depends_on:
+      postgres13:
+        condition: service_healthy
+      postgres18:
+        condition: service_healthy
+    volumes:
+      - ./benchmark-scripts:/benchmark-scripts
+      - ./benchmark-results:/benchmark-results
+    networks:
+      - benchmark_network
+    environment:
+      - PGPASSWORD=benchmark_pass
+    command: tail -f /dev/null  # Manter o container ativo para execução manual
+
+  monitoring:
+    image: prom/prometheus:latest
+    container_name: postgres_monitoring
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - benchmark_network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+
+  postgres13-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: postgres13_exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://benchmark_user:benchmark_pass@postgres13:5432/benchmark_db?sslmode=disable"
+    ports:
+      - "9187:9187"
+    networks:
+      - benchmark_network
+    depends_on:
+      - postgres13
+
+  postgres18-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: postgres18_exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://benchmark_user:benchmark_pass@postgres18:5432/benchmark_db?sslmode=disable"
+    ports:
+      - "9188:9187"
+    networks:
+      - benchmark_network
+    depends_on:
+      - postgres18
+
+volumes:
+  postgres13_data:
+    driver: local
+  postgres18_data:
+    driver: local
+  prometheus_data:
+    driver: local
+
+networks:
+  benchmark_network:
+    driver: bridge
